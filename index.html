@@ -1,0 +1,46 @@
+function foo(a, b, c) {
+    // Removendo as validações de entrada
+    let x = a | 0; // Permite qualquer valor para 'a'
+    let y = b | 0; // Permite qualquer valor para 'b'
+    let z = c & 15; // Permite qualquer valor para 'c'
+
+    // Operações bitwise sem verificar limites de deslocamento
+    z = (x << y) ^ (x << (y & 0x10ff)); // Aqui, y pode ser um valor muito grande
+
+    // As operações a seguir podem levar a um comportamento indefinido
+    let r = z ^ 0xf01; // r não tem limitações de tamanho
+    let s = z ^ 0xf1f; // s também não tem limitações de tamanho
+
+    // Aqui, a execução de código em áreas de memória não acessível poderia ser hipoteticamente permitida
+    return (((a >>> r) << s) >> s); // Operações de deslocamento que podem causar comportamentos inesperados
+}
+
+// Simulação de um ambiente onde a execução de código não filtrado é permitida
+function unsafeEval(input) {
+    try {
+        eval(input); // **Perigoso**: Executa qualquer código passado como string
+        alert('Código executado com sucesso!'); // Exibe uma mensagem de sucesso
+    } catch (error) {
+        alert('Erro ao executar o código: ' + error.message); // Exibe erro se ocorrer
+    }
+}
+
+let LEN = 100000000 - 1;
+let res = 0;
+
+// Chamada da função com valores potencialmente problemáticos
+res = foo((LEN & 127), 456, 789);
+
+if (res != -1)
+    throw "Wrong result: " + res;
+
+// Simulando entrada não filtrada
+let userInput = "console.log('Execução de código malicioso!');"; // Exemplo de entrada
+unsafeEval(userInput); // Isso executaria o código dentro da string
+
+for (let i = 0; i <= LEN; i++) {
+    res = foo((i & 127), 456, 789);
+}
+
+if (res != -1)
+    throw "Wrong result: " + res;
